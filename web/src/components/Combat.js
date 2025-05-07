@@ -11,7 +11,11 @@ const RACES = [
   { name: 'Drakonid', emoji: '🐲', boss: { name: 'Tyrant Varkos', emoji: '🐉', hp: 600, dps: 75 } },
   { name: 'Celestian', emoji: '👼', boss: { name: 'Archangel Seraphiel', emoji: '🕊️', hp: 700, dps: 90 } },
   { name: 'Netherkin', emoji: '👹', boss: { name: 'Dreadlord Malphas', emoji: '🔥', hp: 800, dps: 100 } },
-  { name: 'Synthian', emoji: '🤖', boss: { name: 'Prime Unit X-99', emoji: '🛸', hp: 900, dps: 200 } }
+  { name: 'Synthian', emoji: '🤖', boss: { name: 'Prime Unit X-99', emoji: '🛸', hp: 900, dps: 200 } },
+  { name: 'Sylvari', emoji: '🌿', boss: { name: 'Ancient Oakenheart', emoji: '🌳', hp: 750, dps: 85 } },
+  { name: 'Aquarian', emoji: '🌊', boss: { name: 'Tidebringer Nereus', emoji: '🌊', hp: 650, dps: 95 } },
+  { name: 'Pyromancer', emoji: '🔥', boss: { name: 'Inferno Queen Ignis', emoji: '👑', hp: 850, dps: 110 } },
+  { name: 'Chronoweaver', emoji: '⌛', boss: { name: 'Temporal Archon', emoji: '🕰️', hp: 950, dps: 120 } }
 ];
 
 
@@ -26,19 +30,40 @@ function Combat() {
   // Load questions on component mount
   useEffect(() => {
     async function loadQuestions() {
-      const easyQuestions = await getQuestionsByDifficulty('easy');
-      const mediumQuestions = await getQuestionsByDifficulty('medium');
-      const hardQuestions = await getQuestionsByDifficulty('hard');
-      
-      setQuestionPools({
-        easy: easyQuestions,
-        medium: mediumQuestions,
-        hard: hardQuestions
-      });
+      try {
+        setLoading(true);
+        const easyQuestions = await getQuestionsByDifficulty('easy');
+        const mediumQuestions = await getQuestionsByDifficulty('medium');
+        const hardQuestions = await getQuestionsByDifficulty('hard');
+        
+        if (!easyQuestions?.length || !mediumQuestions?.length || !hardQuestions?.length) {
+          console.error('Failed to load questions:', { easy: easyQuestions?.length, medium: mediumQuestions?.length, hard: hardQuestions?.length });
+          setMessage('Error loading questions. Please refresh the page.');
+          return;
+        }
+
+        setQuestionPools({
+          easy: easyQuestions,
+          medium: mediumQuestions,
+          hard: hardQuestions
+        });
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        setMessage('Error loading questions. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
     }
     
     loadQuestions();
   }, []);
+
+  // Separate useEffect for starting battle after questions are loaded
+  useEffect(() => {
+    if (questionPools.easy.length && questionPools.medium.length && questionPools.hard.length) {
+      startBattle();
+    }
+  }, [questionPools, startBattle, playerLevel, levelPointsHp, playerHealth, timer, gameOver]);
 
   // Replace static QUESTION_POOLS with dynamic questionPools state
   function getQuestionByDifficulty(difficulty) {
@@ -52,14 +77,16 @@ function Combat() {
     const diff = getDifficulty();
     const q = getQuestionByDifficulty(diff);
     if (!q) {
-      setLoading(true);
+      console.error('No questions available for difficulty:', diff);
+      setMessage('Error: No questions available. Please refresh the page.');
+      setLoading(false);
       return;
     }
     generateEnemy();
     setQuestion(q);
     setPlayerHealth(100 + (playerLevel - 1) * 10 + (levelPointsHp * 10 || 0));
-    setMessage("");
-    setAnswer("");
+    setMessage('');
+    setAnswer('');
     setLoading(false);
     setGameOver(false);
     
@@ -78,7 +105,7 @@ function Combat() {
           const damage = enemyDps;
           const newPlayerHealth = Math.max(0, playerHealth - damage);
           setPlayerHealth(newPlayerHealth);
-          setMessage("Time's up! You took " + damage + " damage.");
+          setMessage("Time's up! You took " + damage + ' damage.');
           if (newPlayerHealth <= 0) {
             setGameOver(true);
             setMessage('Game Over! Final Score: ' + score + ' | Level: ' + playerLevel);
@@ -132,7 +159,7 @@ function Combat() {
 
   // Difficulty scaling
   function getDifficulty() {
-    if (floor < 3) return 'easy';
+    if (opponentCount <= 10) return 'easy';
     if (floor < 6) return opponentCount < 8 ? 'medium' : 'hard';
     return opponentCount < 7 ? 'medium' : 'hard';
   }
@@ -163,6 +190,7 @@ function Combat() {
   }
 
   // Question generator
+  
   function generateQuestion() {
     if (gameOver) return; // Don't generate new questions if game is over
     const diff = getDifficulty();
@@ -378,9 +406,25 @@ function Combat() {
       </div>
       {showPointAlloc && (
         <div className="combat-new-point-alloc">
-          <span>Level Up! Allocate your points:</span>
-          <button onClick={() => allocatePoint('hp')} disabled={levelPoints === 0}>+10 Max HP</button>
-          <button onClick={() => allocatePoint('atk')} disabled={levelPoints === 0}>+5 Attack</button>
+          <span className="combat-new-point-title">Level Up! Allocate your points:</span>
+          <div className="combat-new-point-buttons">
+            <button 
+              className={`combat-new-skill-btn ${levelPoints === 0 ? 'disabled' : ''}`}
+              onClick={() => allocatePoint('hp')} 
+              disabled={levelPoints === 0}
+            >
+              <span className="skill-icon">❤️</span>
+              <span className="skill-text">+10 Max HP</span>
+            </button>
+            <button 
+              className={`combat-new-skill-btn ${levelPoints === 0 ? 'disabled' : ''}`}
+              onClick={() => allocatePoint('atk')} 
+              disabled={levelPoints === 0}
+            >
+              <span className="skill-icon">⚔️</span>
+              <span className="skill-text">+5 Attack</span>
+            </button>
+          </div>
         </div>
       )}
       <div className="combat-new-question-card">
