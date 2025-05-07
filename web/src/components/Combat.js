@@ -192,7 +192,7 @@ function Combat() {
           }
           return 0;
         }
-        return prev - 0.05; // Slower countdown
+        return prev - 0.5; // Slower countdown
       });
     }, 200); // Update less frequently for slower countdown
     setTimer(interval);
