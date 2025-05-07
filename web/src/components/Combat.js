@@ -43,12 +43,56 @@ function Combat() {
   // Replace static QUESTION_POOLS with dynamic questionPools state
   function getQuestionByDifficulty(difficulty) {
     const pool = questionPools[difficulty];
-    return pool.length > 0 ? getRandom(pool) : {
-      text: 'Loading questions...',
-      answer: '',
-      points: 0
-    };
+    if (!pool || pool.length === 0) return null;
+    return getRandom(pool);
   }
+
+  // Start new battle
+  function startBattle() {
+    const diff = getDifficulty();
+    const q = getQuestionByDifficulty(diff);
+    if (!q) {
+      setLoading(true);
+      return;
+    }
+    generateEnemy();
+    setQuestion(q);
+    setPlayerHealth(100 + (playerLevel - 1) * 10 + (levelPointsHp * 10 || 0));
+    setMessage("");
+    setAnswer("");
+    setLoading(false);
+    setGameOver(false);
+    
+    // Timer logic based on difficulty
+    let baseTime = diff === 'easy' ? 30 : diff === 'medium' ? 40 : 50;
+    setTimeLeft(baseTime);
+    if (timer) clearInterval(timer);
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (gameOver) {
+          clearInterval(interval);
+          return prev;
+        }
+        if (prev <= 1) {
+          clearInterval(interval);
+          const damage = enemyDps;
+          const newPlayerHealth = Math.max(0, playerHealth - damage);
+          setPlayerHealth(newPlayerHealth);
+          setMessage("Time's up! You took " + damage + " damage.");
+          if (newPlayerHealth <= 0) {
+            setGameOver(true);
+            setMessage('Game Over! Final Score: ' + score + ' | Level: ' + playerLevel);
+          } else {
+            startBattle();
+          }
+          return 0;
+        }
+        return prev - 0.05;
+      });
+    }, 200);
+    setTimer(interval);
+  }
+
   // Player state
   const [playerLevel, setPlayerLevel] = useState(1);
   const [playerExp, setPlayerExp] = useState(0);
@@ -120,16 +164,20 @@ function Combat() {
 
   // Question generator
   function generateQuestion() {
+    if (gameOver) return; // Don't generate new questions if game is over
     const diff = getDifficulty();
     const q = getQuestionByDifficulty(diff);
     setQuestion(q);
-    // Timer logic based on difficulty and answer length
-    let baseTime = diff === 'easy' ? 10 : diff === 'medium' ? 15 : 20;
-    let typingTime = Math.max(3, Math.ceil((q.answer.length + 5) / 3));
-    setTimeLeft(baseTime + typingTime);
+    // Timer logic based on difficulty only
+    let baseTime = diff === 'easy' ? 30 : diff === 'medium' ? 40 : 50;
+    setTimeLeft(baseTime);
     if (timer) clearInterval(timer);
     const interval = setInterval(() => {
       setTimeLeft(prev => {
+        if (gameOver) { // Stop timer if game is over
+          clearInterval(interval);
+          return prev;
+        }
         if (prev <= 1) {
           clearInterval(interval);
           const damage = enemyDps;
@@ -144,21 +192,10 @@ function Combat() {
           }
           return 0;
         }
-        return prev - 1;
+        return prev - 0.05; // Slower countdown
       });
-    }, 1000);
+    }, 200); // Update less frequently for slower countdown
     setTimer(interval);
-  }
-
-  // Start new battle
-  function startBattle() {
-    generateEnemy();
-    generateQuestion();
-    setPlayerHealth(100 + (playerLevel - 1) * 10 + (levelPointsHp * 10 || 0));
-    setMessage("");
-    setAnswer("");
-    setLoading(false);
-    setGameOver(false);
   }
 
   // Track point allocation
@@ -183,7 +220,26 @@ function Combat() {
         setGameOver(true);
         setMessage('Game Over! Final Score: ' + score + ' | Level: ' + playerLevel);
       } else {
-        generateQuestion();
+        // Reset timer without generating new question
+        const diff = getDifficulty();
+        let baseTime = diff === 'easy' ? 30 : diff === 'medium' ? 40 : 50;
+        setTimeLeft(baseTime);
+        if (timer) clearInterval(timer);
+        const interval = setInterval(() => {
+          setTimeLeft(prev => {
+            if (gameOver) {
+              clearInterval(interval);
+              return prev;
+            }
+            if (prev <= 1) {
+              clearInterval(interval);
+              handleTimeout(); // Call handleTimeout recursively
+              return 0;
+            }
+            return prev - 0.05;
+          });
+        }, 200);
+        setTimer(interval);
       }
     }
   }
@@ -193,7 +249,7 @@ function Combat() {
     e.preventDefault();
     if (timer) clearInterval(timer);
     if (gameOver) {
-      // On death, restart at the beginning of the current floor
+      // Reset game state on respawn
       setOpponentCount(1);
       setPlayerHealth(100 + (playerLevel - 1) * 10 + (levelPointsHp * 10 || 0));
       setGameOver(false);
@@ -330,7 +386,7 @@ function Combat() {
       <div className="combat-new-question-card">
         <div className="combat-new-question">{question.text}</div>
         <div style={{fontSize:'0.9rem',color:'#e53e3e',marginBottom:'0.3rem'}}>
-          {timeLeft > 0 ? `Time left: ${timeLeft}s` : ''}
+          {timeLeft > 0 ? `Time left: ${Math.ceil(timeLeft)}s` : ''}
         </div>
         <form className="combat-new-answer-form" onSubmit={handleSubmit}>
           <input
@@ -343,4 +399,18 @@ function Combat() {
             autoFocus
           />
           <button className="combat-new-action-btn" type="submit" disabled={gameOver && !loading}>
- 
+            {gameOver ? 'Restart' : isBoss ? 'Fight Boss' : 'Attack'}
+          </button>
+        </form>
+        {message && <div className="combat-new-message">{message}</div>}
+      </div>
+      <div className="combat-new-footer">
+        <span>Floor: {floor}</span>
+        <span>Defeated: {defeatedTotal}</span>
+        <span>Score: {score}</span>
+      </div>
+    </div>
+  );
+}
+
+export default Combat;
