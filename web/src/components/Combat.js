@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/Combat.css';
 import { getQuestionsByDifficulty } from '../supabase';
 
@@ -73,7 +73,7 @@ function Combat() {
   }
 
   // Start new battle
-  function startBattle() {
+  const startBattle = useCallback(() => {
     const diff = getDifficulty();
     const q = getQuestionByDifficulty(diff);
     if (!q) {
@@ -118,7 +118,7 @@ function Combat() {
       });
     }, 200);
     setTimer(interval);
-  }
+  }, [getDifficulty, getQuestionByDifficulty, generateEnemy, playerLevel, levelPointsHp, playerHealth, timer, gameOver, enemyDps, score]);
 
   // Player state
   const [playerLevel, setPlayerLevel] = useState(1);
@@ -158,35 +158,41 @@ function Combat() {
   const currentRace = RACES[currentRaceIdx];
 
   // Difficulty scaling
-  function getDifficulty() {
-    if (opponentCount <= 10) return 'easy';
-    if (floor < 6) return opponentCount < 8 ? 'medium' : 'hard';
-    return opponentCount < 7 ? 'medium' : 'hard';
+  // Helper functions wrapped in useCallback
+  const getDifficulty = useCallback(() => {
+  if (opponentCount <= 10) return 'easy';
+  if (floor < 6) return opponentCount < 8 ? 'medium' : 'hard';
+  return opponentCount < 7 ? 'medium' : 'hard';
+  }, [opponentCount, floor]);
+  
+  const getQuestionByDifficulty = useCallback((difficulty) => {
+  const pool = questionPools[difficulty];
+  if (!pool || pool.length === 0) return null;
+  return getRandom(pool);
+  }, [questionPools]);
+  
+  const generateEnemy = useCallback(() => {
+  const boss = opponentCount % 10 === 0;
+  setIsBoss(boss);
+  if (boss) {
+    setEnemy({
+      name: currentRace.boss.name,
+      emoji: currentRace.boss.emoji,
+      health: currentRace.boss.hp + floor * 40,
+      flavor: `Boss of Floor ${floor}: ${currentRace.name}`
+    });
+    setEnemyHealth(currentRace.boss.hp + floor * 40);
+    setEnemyDps(currentRace.boss.dps + floor * 5);
+  } else {
+    setEnemy({
+      name: `${currentRace.name} Opponent #${opponentCount}`,
+      emoji: currentRace.emoji,
+      health: 80 + floor * 18,
+      flavor: `A challenger from the ${currentRace.name} race.`
+    });
+    setEnemyHealth(80 + floor * 18);
+    setEnemyDps(20 + floor * 3);
   }
-
-  // Enemy generator
-  function generateEnemy() {
-    const boss = opponentCount % 10 === 0;
-    setIsBoss(boss);
-    if (boss) {
-      setEnemy({
-        name: currentRace.boss.name,
-        emoji: currentRace.boss.emoji,
-        health: currentRace.boss.hp + floor * 40,
-        flavor: `Boss of Floor ${floor}: ${currentRace.name}`
-      });
-      setEnemyHealth(currentRace.boss.hp + floor * 40);
-      setEnemyDps(currentRace.boss.dps + floor * 5);
-    } else {
-      setEnemy({
-        name: `${currentRace.name} Opponent #${opponentCount}`,
-        emoji: currentRace.emoji,
-        health: 80 + floor * 18,
-        flavor: `A challenger from the ${currentRace.name} race.`
-      });
-      setEnemyHealth(80 + floor * 18);
-      setEnemyDps(20 + floor * 3);
-    }
   }
 
   // Question generator
