@@ -1,0 +1,212 @@
+/* New Combat Page Redesign */
+.combat-new-root {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.combat-new-main-card {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: #fff;
+  border-radius: 2rem;
+  box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
+  padding: 2.5rem 3.5rem 2rem 3.5rem;
+  gap: 3rem;
+  margin-bottom: 2.5rem;
+  min-width: 350px;
+  max-width: 600px;
+  position: relative;
+}
+
+.combat-new-enemy-section, .combat-new-player-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+.combat-new-enemy-img, .combat-new-player-img {
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.combat-new-enemy-name {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #d7263d;
+}
+
+.combat-new-enemy-flavor {
+  font-size: 0.95rem;
+  color: #888;
+  margin-bottom: 0.7rem;
+  text-align: center;
+}
+
+.combat-new-player-label {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1b6ca8;
+  margin-bottom: 0.7rem;
+}
+
+.combat-new-health-bar {
+  width: 100%;
+  background: #e0e0e0;
+  border-radius: 1rem;
+  height: 1.1rem;
+  margin-bottom: 0.3rem;
+  overflow: hidden;
+  position: relative;
+  margin-top: 0.2rem;
+}
+.combat-new-health-bar span {
+  position: absolute;
+  right: 0.7rem;
+  top: 0.1rem;
+  font-size: 0.85rem;
+  color: #333;
+}
+.combat-new-health-bar.enemy .combat-new-health-inner {
+  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+}
+.combat-new-health-bar.player .combat-new-health-inner {
+  background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+}
+.combat-new-health-inner {
+  height: 100%;
+  border-radius: 1rem;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.combat-new-vs {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #6c63ff;
+  margin: 0 1.5rem 1.5rem 1.5rem;
+  align-self: flex-end;
+}
+
+.combat-new-question-card {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 18px rgba(60, 60, 120, 0.10);
+  padding: 2rem 2.5rem 1.5rem 2.5rem;
+  margin-bottom: 1.5rem;
+  min-width: 320px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.combat-new-question {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.combat-new-answer-form {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.combat-new-answer-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.8rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.combat-new-answer-input:focus {
+  border: 2px solid #6c63ff;
+}
+
+.combat-new-action-btn {
+  background: linear-gradient(90deg, #6c63ff 0%, #43cea2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(108,99,255,0.08);
+}
+.combat-new-action-btn:hover {
+  background: linear-gradient(90deg, #43cea2 0%, #6c63ff 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+.combat-new-action-btn:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.combat-new-message {
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #d7263d;
+  text-align: center;
+}
+
+.combat-new-footer {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #444;
+  margin-top: 0.5rem;
+}
+
+.combat-new-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.combat-new-spinner {
+  width: 48px;
+  height: 48px;
+  border: 6px solid #e0e0e0;
+  border-top: 6px solid #6c63ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.2rem;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 700px) {
+  .combat-new-main-card {
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 1.5rem 1rem;
+    gap: 1.5rem;
+    min-width: 0;
+    max-width: 98vw;
+  }
+  .combat-new-question-card {
+    min-width: 0;
+    max-width: 98vw;
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+}
